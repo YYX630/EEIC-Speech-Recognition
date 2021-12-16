@@ -29,9 +29,7 @@ def mk_jtalk_command(answer):
     text_code = up.quote(answer)
     speaker = 0
     response = requests.post(f'http://localhost:50021/audio_query?text={text_code}&speaker={speaker}')
-    print(response.status_code)    # HTTPのステータスコード取得
     query = json.loads(response.text)
-    print(type(query))    # レスポンスのHTMLを文字列で取得
     response = requests.post(f'http://localhost:50021/synthesis?speaker={speaker}', data = json.dumps(query))
 
     file = wave.open("/tmp/dialogue/out.wav", "wb") # open file
@@ -51,7 +49,7 @@ if __name__ == '__main__':
     reply = {}
     for line in conf:
         line = line.rstrip()
-        a = line.split();
+        a = line.split()
         reply[a[0]] = a[1]
     conf.close()
 
