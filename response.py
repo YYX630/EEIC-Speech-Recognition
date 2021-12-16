@@ -10,6 +10,12 @@
 #
 # 前の応答への依存性を持たせたい場合は引数を追加すれば良い
 import sys, os
+import requests
+import urllib.parse as up
+import json
+import wave
+import time
+
 
 # 音声合成エンジンのpath
 #jtalkbin = '/usr/local/open_jtalk-1.07/bin/open_jtalk '
@@ -20,9 +26,23 @@ options = '-m /usr/share/hts-voice/nitech-jp-atr503-m001/nitech_jp_atr503_m001.h
 
 # 音声合成のコマンドを生成 (open jtalk を 使う場合
 def mk_jtalk_command(answer):
-    jtalk = 'echo "' + answer + '" | ' + jtalkbin + options + ';'
+    text_code = up.quote(answer)
+    speaker = 0
+    response = requests.post(f'http://localhost:50021/audio_query?text={text_code}&speaker={speaker}')
+    print(response.status_code)    # HTTPのステータスコード取得
+    query = json.loads(response.text)
+    print(type(query))    # レスポンスのHTMLを文字列で取得
+    response = requests.post(f'http://localhost:50021/synthesis?speaker={speaker}', data = json.dumps(query))
+
+    file = wave.open("/tmp/dialogue/out.wav", "wb") # open file
+    # setting parameters
+    file.setnchannels(1)
+    file.setsampwidth(2)
+    file.setframerate(24000)
+    file.writeframes(response.content)
+    file.close() # close file
     play = 'play -q /tmp/dialogue/out.wav; rm /tmp/dialogue/out.wav;'
-    return jtalk + play
+    return play
 
 if __name__ == '__main__':
     # 応答を辞書 reply に登録
