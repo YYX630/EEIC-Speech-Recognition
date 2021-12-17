@@ -14,6 +14,7 @@ import requests
 import urllib.parse as up
 import json
 import wave
+import urllib
 import time
 
 # 音声合成エンジンのpath
@@ -70,58 +71,57 @@ places = [
     "沖縄"
 ]
 """
-places = {
-    "北海道": "Hokkaido",
-    "青森": "Aomori",
-    "秋田": "Akita",
-    "岩手": "Iwate",
-    "山形": "Yamagata",
-    "宮城": "Miyagi",
-    "福島": "Hukushima",
-    "群馬": "Gumma",
-    "栃木": "Tochigi",
-    "茨城": "Ibaraki",
-    "埼玉": "Saitama",
-    "東京": "Tokyo",
-    "神奈川": "Kanagawa",
-    "千葉": "Chiba",
-    "新潟": "Nigata",
-    "長野": "Nagano",
-    "山梨": "Yamanashi",
-    "静岡": "Sizuoka",
-    "富山": "Toyama",
-    "岐阜": "Gifu",
-    "愛知": "Aichi",
-    "石川": "Ishikawa",
-    "福井": "Fukui",
-    "滋賀": "Shiga",
-    "三重": "Mie",
-    "京都": "Kyoto",
-    "大阪": "Osaka",
-    "奈良": "Nara",
-    "和歌山": "Wakayama",
-    "兵庫": "Hyogo",
-    "鳥取": "Tottori",
-    "岡山": "Okayama",
-    "島根": "Shimane",
-    "広島": "Hiroshima",
-    "山口": "Yamagichi",
-    "愛媛": "Ehime",
-    "香川": "Kagawa",
-    "高知": "Kochi",
-    "徳島": "Tokushima",
-    "長崎": "Nagasaki",
-    "佐賀": "Saga",
-    "福岡": "Hukuoka",
-    "熊本": "Kumamoto",
-    "大分": "Oita",
-    "宮崎": "Miyazaki",
-    "鹿児島": "Kagoshima",
-    "沖縄": "Okinawa"
-}
+places = [
+    "北海道",
+    "青森",
+    "秋田",
+    "岩手",
+    "山形",
+    "宮城",
+    "福島",
+    "群馬",
+    "栃木",
+    "茨城",
+    "埼玉",
+    "東京",
+    "神奈川",
+    "千葉",
+    "新潟",
+    "長野",
+    "山梨",
+    "静岡",
+    "富山",
+    "岐阜",
+    "愛知",
+    "石川",
+    "福井",
+    "滋賀",
+    "三重",
+    "京都",
+    "大阪",
+    "奈良",
+    "和歌山",
+    "兵庫",
+    "鳥取",
+    "岡山",
+    "島根",
+    "広島",
+    "山口",
+    "愛媛",
+    "香川",
+    "高知",
+    "徳島",
+    "長崎",
+    "佐賀",
+    "福岡",
+    "熊本",
+    "大分",
+    "宮崎",
+    "鹿児島",
+    "沖縄"
+]
 dates = [
     "今日",
-    "明日",
     "明日",
     "明後日",
     "明々後日",
@@ -145,8 +145,9 @@ names = [
 ]
 weathers = {
     "Clouds": "曇り",
-    "Rainy": "雨",
-    "Sunny": "晴れ"
+    "Rain": "雨",
+    "Clear": "晴れ",
+    "Snow": "雪"
 }
 jtalkbin = 'open_jtalk '
 options = '-m /usr/share/hts-voice/nitech-jp-atr503-m001/nitech_jp_atr503_m001.htsvoice -ow /tmp/dialogue/out.wav -x /var/lib/mecab/dic/open-jtalk/naist-jdic'
@@ -172,31 +173,53 @@ def mk_jtalk_command(answer):
 def returnAnswer(question):
     selected_place = ""
     selected_date = ""
+    selected_date_index = -1
     selected_name = ""
     for place in places:
         if place in question:
             selected_place = place
             break
-    for date in dates:
-        if date in question:
-            selected_date = date
+    for i in range(len(dates)):
+        if dates[i] in question:
+            selected_date = dates[i]
+            selected_date_index = i
             break
     for name in names:
         if name in question:
             selected_name = name
             break
-    place_value = places[place]
-    API_KEY = "37f77e90e5a6eef3861d8f2698167581" # xxxに自分のAPI Keyを入力。
-    api = "http://api.openweathermap.org/data/2.5/weather?q={place}&APPID={key}"
+    api = "https://msearch.gsi.go.jp/address-search/AddressSearch?q={city}"
+    if place == "東京":
+        place = place + "都"
+    elif place == "大阪" or place == "京都":
+        place = place + "府"
+    elif place != "北海道":
+        place = place + "県"
+    s_quote = urllib.parse.quote(place)
+    url2 = api.format(city = s_quote)
+    response = requests.get(url2)
+    coordinates = response.json()[0]["geometry"]["coordinates"]
+    jsonText = json.dumps(coordinates, indent=4)
 
-    url = api.format(place = place_value, key = API_KEY)
+    API_KEY = "37f77e90e5a6eef3861d8f2698167581" # xxxに自分のAPI Keyを入力。
+    api = "http://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&APPID={key}"
+    time = selected_date_index
+    url = api.format(lat=coordinates[1],lon=coordinates[0], key = API_KEY)
     print(url)
     response = requests.get(url)
-    data = response.json()
-    jsonText = json.dumps(data, indent=4)
-    print(jsonText)
-    weather = data["weather"][0]["main"]
-    return weathers[weather]
+    data = ""
+    if selected_name == "天気":
+        data = response.json()["daily"][time]["weather"][0]["main"]
+        data = weathers[data]
+    elif selected_name == "気温":
+        data = str(response.json()["daily"][time]["temp"]["day"])
+    elif selected_name == "最高気温":
+        data = str(response.json()["daily"][time]["temp"]["max"])
+    elif selected_name == "最低気温":
+        data = str(response.json()["daily"][time]["temp"]["min"])
+    print(data)
+    answer = selected_date + "の" + selected_name + "は" + data + "です"
+    return answer
 
 if __name__ == '__main__':
     # 応答を辞書 reply に登録
@@ -229,4 +252,3 @@ if __name__ == '__main__':
         answer = 'もう一度お願いします'
     print("Silly: " + answer)
     os.system(mk_jtalk_command(answer))
-
