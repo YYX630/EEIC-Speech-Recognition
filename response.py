@@ -15,6 +15,7 @@ import urllib.parse as up
 import json
 import wave
 import urllib
+import datetime
 import time
 
 # 音声合成エンジンのpath
@@ -82,9 +83,7 @@ dates = [
     "一昨日",
     "三日前",
     "四日前",
-    "五日前",
-    "六日前",
-    "一週間前"
+    "五日前"
 ]
 names = [
     "天気",
@@ -148,26 +147,43 @@ def returnAnswer(question):
     url2 = api.format(city = s_quote)
     response = requests.get(url2)
     coordinates = response.json()[0]["geometry"]["coordinates"]
-    jsonText = json.dumps(coordinates, indent=4)
 
     API_KEY = "37f77e90e5a6eef3861d8f2698167581" # xxxに自分のAPI Keyを入力。
-    api = "http://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&APPID={key}"
-    time = selected_date_index
-    url = api.format(lat=coordinates[1],lon=coordinates[0], key = API_KEY)
-    print(url)
-    response = requests.get(url)
     data = ""
-    if selected_name == "天気":
-        data = response.json()["daily"][time]["weather"][0]["main"]
-        data = weathers[data]
-    elif selected_name == "気温":
-        data = str(response.json()["daily"][time]["temp"]["day"])
-    elif selected_name == "最高気温":
-        data = str(response.json()["daily"][time]["temp"]["max"])
-    elif selected_name == "最低気温":
-        data = str(response.json()["daily"][time]["temp"]["min"])
+    if selected_date_index <= 7:
+        api = "http://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&APPID={key}"
+        selected_time = selected_date_index
+        url = api.format(lat=coordinates[1],lon=coordinates[0], key = API_KEY)
+        print(url)
+        response = requests.get(url)
+        if selected_name == "天気":
+            data = response.json()["daily"][selected_time]["weather"][0]["main"]
+            data = weathers[data]
+        elif selected_name == "気温":
+            data = str(response.json()["daily"][selected_time]["temp"]["day"] - 273)[0:4] + "度"
+        elif selected_name == "最高気温":
+            data = str(response.json()["daily"][selected_time]["temp"]["max"] - 273)[0:4] + "度"
+        elif selected_name == "最低気温":
+            data = str(response.json()["daily"][selected_time]["temp"]["min"] - 273)[0:4] + "度"
+    else:
+        api = "http://api.openweathermap.org/data/2.5/onecall/timemachine?lat={lat}&lon={lon}&dt={dt}&APPID={key}"
+        selected_time = selected_date_index - 7
+        dt = datetime.datetime.now() - datetime.timedelta(days=selected_time)
+        ts = time.mktime(dt.timetuple())
+        url = api.format(lat=coordinates[1],lon=coordinates[0], dt = int(ts) ,key = API_KEY)
+        print(url)
+        response = requests.get(url)
+        if selected_name == "天気":
+            data = response.json()["hourly"][0]["weather"][0]["main"]
+            data = weathers[data]
+        elif selected_name == "気温":
+            data = str(response.json()["hourly"][0]["temp"] - 273)[0:4] + "度"
+        elif selected_name == "最高気温":
+            data = str(response.json()["hourly"][0]["temp"] - 273)[0:4] + "度"
+        elif selected_name == "最低気温":
+            data = str(response.json()["hourly"][0]["temp"] - 273)[0:4] + "度"
     print(data)
-    answer = selected_date + "の" + selected_name + "は" + data + "です"
+    answer = selected_date + "の" + selected_place + "の" + selected_name + "は" + data + "です"
     return answer
 
 if __name__ == '__main__':
