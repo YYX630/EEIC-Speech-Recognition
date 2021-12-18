@@ -197,17 +197,14 @@ if __name__ == '__main__':
     print("reply: ", reply)
     conf.close()
 
-    # 話者ID
-    sid = int(sys.argv[2])
-
     # 認識結果
-    asrresult = open(sys.argv[3],'r')
+    asrresult = open(sys.argv[2],'r')
     question = asrresult.read().rstrip()
     print("question: ", question)
     asrresult.close()
 
     # 話者ID と認識結果を表示
-    print("SPK"+str(sid)+": "+question)
+    print("SPK"+": "+question)
 
     # 応答リストから対応する応答を出力
     if question in reply:
