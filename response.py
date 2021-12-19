@@ -178,8 +178,10 @@ def returnAnswer(question):
             data = str(response.json()["hourly"][0]["temp"] - 273)[0:4] + "度"
         elif selected_name == "最高気温":
             data = str(response.json()["hourly"][0]["temp"] - 273)[0:4] + "度"
+            selected_name = '気温'
         elif selected_name == "最低気温":
             data = str(response.json()["hourly"][0]["temp"] - 273)[0:4] + "度"
+            selected_name = '気温'
     answer = selected_date + "の" + selected_place + "の" + selected_name + "は" + data + "です"
     return answer
 
