@@ -1,2 +1,4 @@
 sid/mfcc/input.mfcc
 sid/GMM/input
+dialogue.conf
+julius-4.2.2/
