@@ -86,10 +86,10 @@ dates = [
     "五日前"
 ]
 names = [
-    "天気",
-    "気温",
     "最低気温",
-    "最高気温"
+    "最高気温",
+    "天気",
+    "気温"
 ]
 weathers = {
     "Clouds": "曇り",
@@ -154,7 +154,6 @@ def returnAnswer(question):
         api = "http://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&APPID={key}"
         selected_time = selected_date_index
         url = api.format(lat=coordinates[1],lon=coordinates[0], key = API_KEY)
-        print(url)
         response = requests.get(url)
         if selected_name == "天気":
             data = response.json()["daily"][selected_time]["weather"][0]["main"]
@@ -171,7 +170,6 @@ def returnAnswer(question):
         dt = datetime.datetime.now() - datetime.timedelta(days=selected_time)
         ts = time.mktime(dt.timetuple())
         url = api.format(lat=coordinates[1],lon=coordinates[0], dt = int(ts) ,key = API_KEY)
-        print(url)
         response = requests.get(url)
         if selected_name == "天気":
             data = response.json()["hourly"][0]["weather"][0]["main"]
@@ -182,7 +180,6 @@ def returnAnswer(question):
             data = str(response.json()["hourly"][0]["temp"] - 273)[0:4] + "度"
         elif selected_name == "最低気温":
             data = str(response.json()["hourly"][0]["temp"] - 273)[0:4] + "度"
-    print(data)
     answer = selected_date + "の" + selected_place + "の" + selected_name + "は" + data + "です"
     return answer
 
@@ -194,13 +191,11 @@ if __name__ == '__main__':
     for line in conf:
         line = line.rstrip()
         reply.append(line)
-    print("reply: ", reply)
     conf.close()
 
     # 認識結果
     asrresult = open(sys.argv[2],'r')
     question = asrresult.read().rstrip()
-    print("question: ", question)
     asrresult.close()
 
     # 話者ID と認識結果を表示
@@ -208,9 +203,8 @@ if __name__ == '__main__':
 
     # 応答リストから対応する応答を出力
     if question in reply:
-        print("returnAnswer")
         answer = returnAnswer(question)
     else:
         answer = 'もう一度お願いします'
-    print("Silly: " + answer)
+    print("Metan: " + answer)
     os.system(mk_jtalk_command(answer))
