@@ -11,6 +11,12 @@ if [ ! -e $tmpdirname ];then
 	mkdir ${tmpdirname}
 fi
 
+cd asr/grammar/
+julius-generate weather -n 10000 > ${tmpdirname}/hoge.txt
+../../utilities/fix_str.py ${tmpdirname}/hoge.txt ../../dialogue/dialogue.conf
+rm ${tmpdirname}/hoge.txt
+cd ../..
+
 while true; do
 	# adinrec による録音
 	filename=${tmpdirname}/input.wav
@@ -20,16 +26,6 @@ while true; do
 		rmdir $tmpdirname
 		exit;
 	fi
-
-	# 話者認識
-	sidfile=${tmpdirname}/spkid.txt
-	#cd sid;
-	bash sid/test.sh $filename $sidfile;
-	#cd ..
-	
-	# 現在の話者番号を格納
-	# もし前の状態を保存しておきたければ別変数/別ファイルを用意する
-	sidnum=$(cat $sidfile)
 
 	# 音声認識
 	asrresult=${tmpdirname}/asrresult.txt
@@ -43,10 +39,10 @@ while true; do
 	# 話者認識/音声認識結果を応答を生成する
 	# 状態/履歴への依存性を持たせたければこのプログラムを適宜修正（引数変更等）
 	# 初期では話者ID を元に異なる応答リストを読み込む仕様
-	./response.py dialogue/dialogue${sidnum}.conf $sidnum $asrresult
+	./response.py dialogue/dialogue.conf $asrresult
 
 	# 事後処理
-	rm $filename $sidfile $asrresult
+	rm $filename $asrresult
 done
 # ここは実行されないはず
 rmdir $tmpdirname
